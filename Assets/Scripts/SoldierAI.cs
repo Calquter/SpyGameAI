@@ -36,7 +36,6 @@ public class SoldierAI : MonoBehaviour
     [SerializeField] private float _nearestHideableDistance;
     [SerializeField] private GameObject _nearestHideableSpot;
     [SerializeField] private float _nearestSpotDistance;
-    [SerializeField] private GameObject[] _hideableSpotGameobjects;
 
     [SerializeField] private Collider[] _hideableGameobjects;
     [SerializeField] private LayerMask _hideableLayer;
@@ -143,7 +142,7 @@ public class SoldierAI : MonoBehaviour
 
                 if (_canControl)
                 {
-                    if (_agent.remainingDistance == 0f)
+                    if (_agent.remainingDistance <= 0f)
                     {
                         _agent.velocity = Vector3.zero;
                         _agent.isStopped = true;
@@ -184,7 +183,6 @@ public class SoldierAI : MonoBehaviour
         _agent.isStopped = false;
 
         _hideableGameobjects = Physics.OverlapSphere(transform.position, 50f, _hideableLayer.value);
-        print(_hideableLayer.value);
 
         for (int i = 0; i < _hideableGameobjects.Length; i++)
         {
@@ -215,11 +213,40 @@ public class SoldierAI : MonoBehaviour
             }
             else
             {
-                if (Vector3.Distance(_enemy.transform.position, _nearestHideableGameobject.transform.GetChild(i).position) > _nearestSpotDistance)
+
+                if (_nearestHideableSpot == _nearestHideableGameobject.transform.GetChild(i).gameObject)
+                {
+                    print("Eþit");
+                }
+
+                if (Vector3.Distance(_enemy.transform.position, _nearestHideableGameobject.transform.GetChild(i).position) > _nearestSpotDistance && _nearestHideableSpot != _nearestHideableGameobject.transform.GetChild(i).gameObject)
                 {
                     _nearestHideableSpot = _nearestHideableGameobject.transform.GetChild(i).gameObject;
 
                     _nearestSpotDistance = Vector3.Distance(_nearestHideableSpot.transform.position, _enemy.transform.position);
+                }
+                else if(_nearestHideableSpot == _nearestHideableGameobject.transform.GetChild(i).gameObject)
+                {
+
+                    _nearestSpotDistance = 0f;
+                    int notAllowedChild = i;
+
+                    if (i >= _nearestHideableGameobject.transform.childCount - 1)
+                    {
+                        
+                        for (int k = 0; k < _nearestHideableGameobject.transform.childCount; k++)
+                        {
+                            print("aa");
+
+                            if (Vector3.Distance(_enemy.transform.position, _nearestHideableGameobject.transform.GetChild(k).position) > _nearestSpotDistance && k != notAllowedChild)
+                            {
+                                _nearestHideableSpot = _nearestHideableGameobject.transform.GetChild(k).gameObject;
+
+                                _nearestSpotDistance = Vector3.Distance(_nearestHideableSpot.transform.position, _enemy.transform.position);
+                                print("bb");
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -330,8 +357,6 @@ public class SoldierAI : MonoBehaviour
                     _isInDanger = true;
                 }
             }
-
-            print(_canHide);
         }
     }
     private void ControlEnemyPosition()
@@ -340,16 +365,20 @@ public class SoldierAI : MonoBehaviour
         Vector3 dir = (_enemy.transform.position - transform.position).normalized;
 
         Debug.DrawLine(transform.position, transform.position + dir * 20, Color.red);
-
+        
         RaycastHit hitted;
 
-        //if (Physics.Raycast(transform.position, transform.position + dir, out hitted, 50f))
-        //{
-        //    if (hitted.collider.tag == "Enemy")
-        //    {
-        //        print("Deðiyor");
-        //    }
-        //}
+        if (Physics.Raycast(transform.position, dir, out hitted, Mathf.Infinity))
+        {
+
+            if (hitted.collider.tag == "Enemy")
+            {
+                SetState(SoldierStates.Danger);
+                _canHide = true;
+                _agent.isStopped = false;
+                _isInDanger = true;
+            }
+        }
 
     }
 
