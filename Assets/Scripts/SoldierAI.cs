@@ -30,6 +30,7 @@ public class SoldierAI : MonoBehaviour
     private bool _canControl;
     private bool _isNear;
     private bool _isInSpot;
+    private bool _isInDanger;
 
     [SerializeField] private GameObject _nearestHideableGameobject;
     [SerializeField] private float _nearestHideableDistance;
@@ -49,10 +50,6 @@ public class SoldierAI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            _canHide = true;
-        }
 
         Debug.DrawRay(transform.position + Vector3.up * _visualHeighMultiplier, transform.forward * _visualDistance, Color.green);
         Debug.DrawRay(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward + transform.right).normalized * _visualDistance, Color.green);
@@ -61,6 +58,8 @@ public class SoldierAI : MonoBehaviour
         Debug.DrawRay(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right).normalized * _visualDistance, Color.green);
         Debug.DrawRay(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right / 2).normalized * _visualDistance, Color.green);
         Debug.DrawRay(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right / 4).normalized * _visualDistance, Color.green);
+
+        RaycastControl();
 
         switch (_state)
         {
@@ -76,15 +75,16 @@ public class SoldierAI : MonoBehaviour
                     transform.rotation = Quaternion.Lerp(transform.rotation, _nearestHideableSpot.transform.rotation, .02f);
                 }
 
-                if (_canRoam)
+                if (_canRoam && !_isInDanger)
                 {
                     DoRoam(Random.Range(15, 20));
                 }
 
                 break;
+
             case SoldierStates.Roam:
 
-                if(!_isNear)
+                if (!_isNear)
                     soldierAnimator.SetBool("Walk", true);
                 else
                     soldierAnimator.SetBool("Walk", false);
@@ -105,7 +105,6 @@ public class SoldierAI : MonoBehaviour
                     if (_agent.remainingDistance <= 0.75f)
                     {
                         _isNear = true;
-                        print("aaa");
                     }
 
                     if (_agent.remainingDistance == 0f)
@@ -119,6 +118,7 @@ public class SoldierAI : MonoBehaviour
                 }
 
                 break;
+
             case SoldierStates.Danger:
 
                 soldierAnimator.SetBool("Walk", false);
@@ -172,9 +172,6 @@ public class SoldierAI : MonoBehaviour
                 break;
         }
     }
-
-
-
     private void HideSomewhere()
     {
         _canHide = false;
@@ -224,8 +221,6 @@ public class SoldierAI : MonoBehaviour
         _agent.SetDestination(_nearestHideableSpot.transform.position);
 
     }
-
-
     private void ControlEnemyDistance()
     {
         if (_state != SoldierStates.Danger && !_isInSpot)
@@ -241,8 +236,6 @@ public class SoldierAI : MonoBehaviour
             }
         }
     }
-
-
     private void DoRoam(float time)
     {
         _canRoam = false;
@@ -253,29 +246,96 @@ public class SoldierAI : MonoBehaviour
 
         StartCoroutine(RoamState(time));
     }
-
-
     IEnumerator RoamState(float time)
     {
         yield return new WaitForSeconds(time);
         _canRoam = true;
     }
-
-
     private void RaycastControl()
     {
-        RaycastHit hit;
-
-
-        if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, transform.forward, out hit, _visualDistance))
+        if (_state != SoldierStates.Danger && !_isInDanger)
         {
-            if (hit.collider.tag == "Player")
+            RaycastHit hit;
+
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, transform.forward, out hit, _visualDistance))
             {
-                SetState(SoldierStates.Danger);
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward + transform.right).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward + transform.right / 2).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward + transform.right / 4).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right / 2).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
+            }
+
+            if (Physics.Raycast(transform.position + Vector3.up * _visualHeighMultiplier, (transform.forward - transform.right / 2).normalized, out hit, _visualDistance))
+            {
+                if (hit.collider.tag == "Enemy")
+                {
+                    SetState(SoldierStates.Danger);
+                    _canHide = true;
+
+                    _isInDanger = true;
+                }
             }
         }
     }
-
 }
 
 
