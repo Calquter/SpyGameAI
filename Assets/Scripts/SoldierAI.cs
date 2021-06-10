@@ -31,6 +31,9 @@ public class SoldierAI : MonoBehaviour
     private bool _isNear;
     private bool _isInSpot;
     private bool _isInDanger;
+    private bool _dontMove;
+    [SerializeField] private bool _isHalf;
+    [SerializeField] private bool _columnSelectable;
 
     [SerializeField] private GameObject _nearestHideableGameobject;
     [SerializeField] private float _nearestHideableDistance;
@@ -72,7 +75,30 @@ public class SoldierAI : MonoBehaviour
 
                 if (_isInSpot)
                 {
-                    transform.rotation = Quaternion.Lerp(transform.rotation, _nearestHideableSpot.transform.rotation, .02f);
+                    
+
+                    if (_isHalf)
+                    {
+                        int rightOrLeft = Random.Range(0, 1);
+
+                        if (rightOrLeft == 0)
+                        {
+                            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(_nearestHideableSpot.transform.rotation.x, _nearestHideableSpot.transform.rotation.y + 45, _nearestHideableSpot.transform.rotation.z), .02f);
+                        }
+                        else
+                        {
+                            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(_nearestHideableSpot.transform.rotation.x, _nearestHideableSpot.transform.rotation.y - 45, _nearestHideableSpot.transform.rotation.z), .02f);
+                        }
+
+                        soldierAnimator.SetBool("Crouch", true);
+                        _columnSelectable = true;
+                    }
+                    else
+                    {
+                        transform.rotation = Quaternion.Lerp(transform.rotation, _nearestHideableSpot.transform.rotation, .02f);
+                    }
+                        
+
                 }
 
                 if (_canRoam && !_isInDanger)
@@ -186,22 +212,58 @@ public class SoldierAI : MonoBehaviour
 
         for (int i = 0; i < _hideableGameobjects.Length; i++)
         {
-            if (_nearestHideableGameobject == null)
-            {
-                _nearestHideableGameobject = _hideableGameobjects[i].gameObject;
 
-                _nearestHideableDistance = Vector3.Distance(transform.position, _nearestHideableGameobject.transform.position);
+            if (_columnSelectable)
+            {
+                print(_hideableGameobjects[i].tag);
+                print("1");
+                if (_nearestHideableGameobject == null)
+                {
+                    if (_hideableGameobjects[i].tag != "HalfWall")
+                    {
+                        _nearestHideableGameobject = _hideableGameobjects[i].gameObject;
+
+                        _nearestHideableDistance = Vector3.Distance(transform.position, _nearestHideableGameobject.transform.position);
+                        print("2");
+                    }
+                }
+                else
+                {
+                    if (Vector3.Distance(transform.position, _hideableGameobjects[i].transform.position) < _nearestHideableDistance)
+                    {
+                        if (_hideableGameobjects[i].tag != "HalfWall")
+                        {
+                            _nearestHideableGameobject = _hideableGameobjects[i].gameObject;
+
+                            _nearestHideableDistance = Vector3.Distance(transform.position, _nearestHideableGameobject.transform.position);
+                        }
+                    }
+                }
+
+                print(_hideableGameobjects[i].tag);
             }
             else
             {
-                if (Vector3.Distance(transform.position, _hideableGameobjects[i].transform.position) < _nearestHideableDistance)
+                print("4");
+                if (_nearestHideableGameobject == null)
                 {
                     _nearestHideableGameobject = _hideableGameobjects[i].gameObject;
 
                     _nearestHideableDistance = Vector3.Distance(transform.position, _nearestHideableGameobject.transform.position);
                 }
+                else
+                {
+                    if (Vector3.Distance(transform.position, _hideableGameobjects[i].transform.position) < _nearestHideableDistance)
+                    {
+                        _nearestHideableGameobject = _hideableGameobjects[i].gameObject;
+
+                        _nearestHideableDistance = Vector3.Distance(transform.position, _nearestHideableGameobject.transform.position);
+                    }
+                }
             }
         }
+
+        _columnSelectable = false;
 
         for (int i = 0; i < _nearestHideableGameobject.transform.childCount; i++)
         {
@@ -213,12 +275,6 @@ public class SoldierAI : MonoBehaviour
             }
             else
             {
-
-                if (_nearestHideableSpot == _nearestHideableGameobject.transform.GetChild(i).gameObject)
-                {
-                    print("Eþit");
-                }
-
                 if (Vector3.Distance(_enemy.transform.position, _nearestHideableGameobject.transform.GetChild(i).position) > _nearestSpotDistance && _nearestHideableSpot != _nearestHideableGameobject.transform.GetChild(i).gameObject)
                 {
                     _nearestHideableSpot = _nearestHideableGameobject.transform.GetChild(i).gameObject;
@@ -236,14 +292,12 @@ public class SoldierAI : MonoBehaviour
                         
                         for (int k = 0; k < _nearestHideableGameobject.transform.childCount; k++)
                         {
-                            print("aa");
 
                             if (Vector3.Distance(_enemy.transform.position, _nearestHideableGameobject.transform.GetChild(k).position) > _nearestSpotDistance && k != notAllowedChild)
                             {
                                 _nearestHideableSpot = _nearestHideableGameobject.transform.GetChild(k).gameObject;
 
                                 _nearestSpotDistance = Vector3.Distance(_nearestHideableSpot.transform.position, _enemy.transform.position);
-                                print("bb");
                             }
                         }
                     }
@@ -251,6 +305,15 @@ public class SoldierAI : MonoBehaviour
             }
         }
 
+
+        if (_nearestHideableGameobject.tag == "HalfWall")
+        {
+            _isHalf = true;
+        }
+        else
+        {
+            _isHalf = false;
+        }
 
         SetState(SoldierStates.Danger);
         _agent.SetDestination(_nearestHideableSpot.transform.position);
@@ -373,13 +436,44 @@ public class SoldierAI : MonoBehaviour
 
             if (hitted.collider.tag == "Enemy")
             {
-                SetState(SoldierStates.Danger);
                 _canHide = true;
                 _agent.isStopped = false;
                 _isInDanger = true;
+                soldierAnimator.SetBool("Crouch", false);
+                if (_isHalf)
+                {
+                    if (!_dontMove)
+                    {
+                        StartCoroutine(WaitForStand(1.5f));
+                    }
+                }
+                else
+                {
+                    SetState(SoldierStates.Danger);
+                }
+                
             }
         }
+    }
 
+
+    IEnumerator WaitForStand(float time)
+    {
+        _dontMove = true;
+        ResetYourDistance();
+        yield return new WaitForSeconds(time);
+        SetState(SoldierStates.Danger);
+        _dontMove = false;
+        _isHalf = false;
+    }
+
+
+    private void ResetYourDistance()
+    {
+        _nearestHideableGameobject = null;
+        _nearestHideableDistance = 1000f;
+        _nearestHideableSpot = null;
+        _nearestSpotDistance = 0f;
     }
 
 }
