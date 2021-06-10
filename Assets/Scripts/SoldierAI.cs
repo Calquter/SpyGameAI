@@ -79,17 +79,7 @@ public class SoldierAI : MonoBehaviour
 
                     if (_isHalf)
                     {
-                        int rightOrLeft = Random.Range(0, 1);
-
-                        if (rightOrLeft == 0)
-                        {
-                            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(_nearestHideableSpot.transform.rotation.x, _nearestHideableSpot.transform.rotation.y + 45, _nearestHideableSpot.transform.rotation.z), .02f);
-                        }
-                        else
-                        {
-                            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(_nearestHideableSpot.transform.rotation.x, _nearestHideableSpot.transform.rotation.y - 45, _nearestHideableSpot.transform.rotation.z), .02f);
-                        }
-
+                        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(_nearestHideableSpot.transform.rotation.x, _nearestHideableSpot.transform.rotation.y + 45, _nearestHideableSpot.transform.rotation.z), .02f);
                         soldierAnimator.SetBool("Crouch", true);
                         _columnSelectable = true;
                     }
