@@ -27,7 +27,7 @@ public class SoldierAI : MonoBehaviour
 
     [SerializeField] private bool _canRoam;
     [SerializeField] private bool _canHide;
-    private bool _canControl;
+    [SerializeField] private bool _canControl;
     private bool _isNear;
     private bool _isInSpot;
     private bool _isInDanger;
@@ -65,6 +65,7 @@ public class SoldierAI : MonoBehaviour
         {
             case SoldierStates.Idle:
 
+                _canControl = false;
 
                 soldierAnimator.SetBool("Walk", false);
                 soldierAnimator.SetBool("Run", false);
@@ -79,6 +80,12 @@ public class SoldierAI : MonoBehaviour
                 {
                     DoRoam(Random.Range(15, 20));
                 }
+
+                if (_isInDanger)
+                {
+                    ControlEnemyPosition();
+                }
+
 
                 break;
 
@@ -143,8 +150,7 @@ public class SoldierAI : MonoBehaviour
                         SetState(SoldierStates.Idle);
                         _canRoam = true;
                         _isInSpot = true;
-
-                        
+                        _canControl = false;
                     }
                 }
 
@@ -175,8 +181,10 @@ public class SoldierAI : MonoBehaviour
     private void HideSomewhere()
     {
         _canHide = false;
+        _agent.isStopped = false;
 
-        _hideableGameobjects = Physics.OverlapSphere(transform.position, 30f, _hideableLayer.value);
+        _hideableGameobjects = Physics.OverlapSphere(transform.position, 50f, _hideableLayer.value);
+        print(_hideableLayer.value);
 
         for (int i = 0; i < _hideableGameobjects.Length; i++)
         {
@@ -223,18 +231,7 @@ public class SoldierAI : MonoBehaviour
     }
     private void ControlEnemyDistance()
     {
-        if (_state != SoldierStates.Danger && !_isInSpot)
-        {
-            if(_enemy != null)
-            {
-                _enemyDistance = Vector3.Distance(transform.position, _enemy.position);
-
-                {
-                    SetState(SoldierStates.Danger);
-                    _canHide = true;
-                }
-            }
-        }
+        
     }
     private void DoRoam(float time)
     {
@@ -264,7 +261,6 @@ public class SoldierAI : MonoBehaviour
                 {
                     SetState(SoldierStates.Danger);
                     _canHide = true;
-
                     _isInDanger = true;
                 }
             }
@@ -334,8 +330,29 @@ public class SoldierAI : MonoBehaviour
                     _isInDanger = true;
                 }
             }
+
+            print(_canHide);
         }
     }
+    private void ControlEnemyPosition()
+    {
+
+        Vector3 dir = (_enemy.transform.position - transform.position).normalized;
+
+        Debug.DrawLine(transform.position, transform.position + dir * 20, Color.red);
+
+        RaycastHit hitted;
+
+        //if (Physics.Raycast(transform.position, transform.position + dir, out hitted, 50f))
+        //{
+        //    if (hitted.collider.tag == "Enemy")
+        //    {
+        //        print("Deðiyor");
+        //    }
+        //}
+
+    }
+
 }
 
 
